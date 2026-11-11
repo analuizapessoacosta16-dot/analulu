@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System.Love // Protocolo Especial</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #050505;
+            color: #00ff88;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Tela do Terminal */
+        #terminal {
+            width: 90%;
+            max-width: 600px;
+            z-index: 10;
+            text-align: left;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            text-shadow: 0 0 8px rgba(0, 255, 136, 0.6);
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 18px;
+            background-color: #00ff88;
+            animation: blink 0.8s infinite;
+            vertical-align: middle;
+        }
+
+        @keyframes blink {
+            0%, 49% { opacity: 1; }
+            50%, 100% { opacity: 0; }
+        }
+
+        /* Botão Estilo Cyber */
+        #runBtn {
+            display: none;
+            margin-top: 30px;
+            padding: 15px 25px;
+            background: transparent;
+            color: #ff2a6d;
+            border: 2px solid #ff2a6d;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 42, 109, 0.5), inset 0 0 15px rgba(255, 42, 109, 0.2);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #runBtn:hover {
+            background: #ff2a6d;
+            color: #050505;
+            box-shadow: 0 0 30px #ff2a6d;
+        }
+
+        /* Canvas das Partículas */
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Mensagem Final Neon */
+        #finalMessage {
+            position: absolute;
+            bottom: 12%;
+            width: 100%;
+            text-align: center;
+            z-index: 5;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 2.5s ease;
+            padding: 0 20px;
+        }
+
+        #finalMessage h1 {
+            color: #ffffff;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 1.8rem;
+            text-shadow: 0 0 10px #ff2a6d, 0 0 20px #ff2a6d, 0 0 40px #ff2a6d;
+            margin-bottom: 8px;
+        }
+
+        #finalMessage p {
+            color: #ffb3c6;
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="terminal">
+        <div id="text-output"></div><span class="cursor" id="cursor"></span>
+        <br>
+        <button id="runBtn" onclick="launchHeart()">[ EXECUTAR SURPRESA.EXE ]</button>
+    </div>
+
+    <div id="finalMessage">
+        <!-- PERSONALIZE A MENSAGEM AQUI -->
+        <h1>Você hackeou meu coração ❤️</h1>
+        <p>(Toque ou arraste na tela para interagir com as partículas)</p>
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        // --- 1. EFEITO DE DIGITAÇÃO NO TERMINAL ---
+        // VOCÊ PODE EDITAR AS FRASES ABAIXO!
+        const lines = [
+            "> Conectando ao servidor seguro...",
+            "> Analisando banco de dados de pessoas incríveis...",
+            "> 1 resultado encontrado: VOCÊ.",
+            "> Calculando nível de compatibilidade: 100% [||||||]",
+            "> Compilando sentimento.exe...",
+            "> Pronto para executar."
+        ];
+
+        let lineIndex = 0;
+        let charIndex = 0;
+        const output = document.getElementById('text-output');
+        const runBtn = document.getElementById('runBtn');
+
+        function typeWriter() {
+            if (lineIndex < lines.length) {
+                if (charIndex < lines[lineIndex].length) {
+                    output.innerHTML += lines[lineIndex].charAt(charIndex);
+                    charIndex++;
+                    setTimeout(typeWriter, 35); // Velocidade da digitação
+                } else {
+                    output.innerHTML += "<br>";
+                    lineIndex++;
+                    charIndex = 0;
+                    setTimeout(typeWriter, 400); // Pausa entre linhas
+                }
+            } else {
+                document.getElementById('cursor').style.display = 'none';
+                runBtn.style.display = 'inline-block';
+            }
+        }
+
+        window.onload = typeWriter;
+
+        // --- 2. SISTEMA DE PARTÍCULAS EM FORMATO DE CORAÇÃO ---
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let animationStarted = false;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const mouse = { x: null, y: null, radius: 80 };
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.x;
+            mouse.y = e.y;
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            mouse.x = e.touches[0].clientX;
+            mouse.y = e.touches[0].clientY;
+        });
+
+        window.addEventListener('touchend', () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        class Particle {
+            constructor(targetX, targetY) {
+                // Começa espalhado aleatoriamente
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.targetX = targetX;
+                this.targetY = targetY;
+                this.size = Math.random() * 2.5 + 1;
+                this.speed = Math.random() * 0.04 + 0.02;
+                const colors = ['#ff2a6d', '#ff5e8e', '#ff0055', '#ffffff', '#ff8fa3'];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            update() {
+                // Movimento suave até formar o coração
+                let dx = this.targetX - this.x;
+                let dy = this.targetY - this.y;
+                this.x += dx * this.speed;
+                this.y += dy * this.speed;
+
+                // Interação com mouse/dedo (repele as partículas)
+                if (mouse.x != null && mouse.y != null) {
+                    let mdx = this.x - mouse.x;
+                    let mdy = this.y - mouse.y;
+                    let distance = Math.sqrt(mdx * mdx + mdy * mdy);
+                    if (distance < mouse.radius) {
+                        let force = (mouse.radius - distance) / mouse.radius;
+                        this.x += (mdx / distance) * force * 15;
+                        this.y += (mdy / distance) * force * 15;
+                    }
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        function createHeartParticles() {
+            particles = [];
+            const totalParticles = 900; // Quantidade de pontinhos brilhantes
+            const scale = Math.min(canvas.width, canvas.height) / 38; // Tamanho responsivo
+
+            for (let i = 0; i < totalParticles; i++) {
+                // Equação paramétrica matemática de um coração
+                let t = Math.random() * Math.PI * 2;
+                // Preenche também o interior do coração
+                let r = Math.sqrt(Math.random()); 
+                
+                let heartX = 16 * Math.pow(Math.sin(t), 3);
+                let heartY = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+
+                let targetX = canvas.width / 2 + (heartX * scale * r);
+                let targetY = canvas.height / 2 + (heartY * scale * r) - 30;
+
+                particles.push(new Particle(targetX, targetY));
+            }
+        }
+
+        function animate() {
+            ctx.fillStyle = 'rgba(5, 5, 5, 0.2)'; // Efeito de rastro luminoso
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+            }
+            requestAnimationFrame(animate);
+        }
+
+        function launchHeart() {
+            document.getElementById('terminal').style.display = 'none';
+            createHeartParticles();
+            if (!animationStarted) {
+                animate();
+                animationStarted = true;
+            }
+            setTimeout(() => {
+                document.getElementById('finalMessage').style.opacity = '1';
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
